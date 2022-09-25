@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { nanoid } from 'nanoid';
+import { useSelector, useDispatch } from 'react-redux';
 import { Form } from './Form/Form';
 import { Filter } from './Filter/Filter';
 import { ContactsList } from './ContactList/ContactsList';
 import { Container } from './Container.styled';
-
-// import initialContacts from './Contacts/Contacts.json';
+import { addItem, delItem, changeFilter } from 'redux/actions';
+import { getContacts, getFilter } from 'redux/selectors';
 
 export const App = () => {
-  const [contacts, setContacts] = useState(
-    JSON.parse(window.localStorage.getItem('contacts')) ?? []
-  );
-  const [filter, setFilter] = useState('');
+  const dispatch = useDispatch();
+  const filterContact = useSelector(getFilter);
+  const itemContact = useSelector(getContacts);
 
   const addContacts = (name, number) => {
     let newContact = {
@@ -20,27 +20,27 @@ export const App = () => {
       number,
     };
 
-    contacts.find(
+    itemContact.find(
       ({ name }) => name.toLowerCase() === newContact.name.toLowerCase()
     )
       ? alert(`${newContact.name} is already exist in your contacts!`)
-      : setContacts([newContact, ...contacts]);
+      : dispatch(addItem(newContact));
   };
 
   const deleteContact = contactId => {
-    setContacts(contacts.filter(contact => contact.id !== contactId));
+    dispatch(delItem(contactId));
   };
 
-  const changeFilter = e => {
-    setFilter(e.currentTarget.value);
+  const handleChangeFilter = e => {
+    dispatch(changeFilter(e.target.value));
   };
 
   useEffect(() => {
-    window.localStorage.setItem('contacts', JSON.stringify(contacts));
-  }, [contacts]);
+    localStorage.setItem('contacts', JSON.stringify(itemContact));
+  }, [itemContact]);
 
-  const normalizeFilter = filter.toLowerCase();
-  const visibleContacts = contacts.filter(contact =>
+  const normalizeFilter = filterContact.toLowerCase();
+  const visibleContacts = itemContact.filter(contact =>
     contact.name.toLowerCase().includes(normalizeFilter)
   );
 
@@ -52,7 +52,7 @@ export const App = () => {
 
       <h2>Contacts</h2>
 
-      <Filter value={filter} onChange={changeFilter} />
+      <Filter value={filterContact} onChange={handleChangeFilter} />
 
       <ContactsList
         contacts={visibleContacts}
